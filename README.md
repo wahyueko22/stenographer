@@ -1,7 +1,7 @@
 Stenographer
 ============
 
-Notes : addtional feature to query data with MAC address
+Notes : addtional feature to query data by MAC address
 
 Overview
 --------
