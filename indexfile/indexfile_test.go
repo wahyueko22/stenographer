@@ -18,12 +18,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	"reflect"
+	"stenographer/base"
+	"stenographer/filecache"
 	"testing"
 
 	"golang.org/x/net/context"
-
-	"github.com/google/stenographer/base"
-	"github.com/google/stenographer/filecache"
+	// "github.com/google/stenographer/base"
+	// "github.com/google/stenographer/filecache"
 )
 
 var ctx = context.Background()

@@ -23,12 +23,16 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"stenographer/base"
+	"stenographer/filecache"
+	"stenographer/stats"
 	"strings"
 
+	// "github.com/golang/leveldb/table"
+	// "github.com/google/stenographer/base"
+	// "github.com/google/stenographer/filecache"
+	// "github.com/google/stenographer/stats"
 	"github.com/golang/leveldb/table"
-	"github.com/google/stenographer/base"
-	"github.com/google/stenographer/filecache"
-	"github.com/google/stenographer/stats"
 	"golang.org/x/net/context"
 )
 
@@ -197,6 +201,18 @@ func (i *IndexFile) positions(ctx context.Context, from, to []byte) (out base.Po
 }
 func (i *IndexFile) positionsSingleKey(ctx context.Context, key []byte) (base.Positions, error) {
 	return i.positions(ctx, key, key)
+}
+
+// MACPositions returns the positions in the block file of all packets with the given MAC address.
+func (i *IndexFile) MACPositions(ctx context.Context, mac net.HardwareAddr) (base.Positions, error) {
+	if len(mac) != 6 {
+		return nil, fmt.Errorf("invalid MAC length: %d, expected: 6", len(mac))
+	}
+
+	// Create a key for the MAC address query (you can decide how to prefix or format this).
+	key := append([]byte{7}, []byte(mac)...)
+
+	return i.positionsSingleKey(ctx, key)
 }
 
 func parseIP(in string) net.IP {

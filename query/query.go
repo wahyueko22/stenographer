@@ -22,13 +22,17 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"stenographer/base"
+	"stenographer/indexfile"
+	"stenographer/stats"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/stenographer/base"
-	"github.com/google/stenographer/indexfile"
-	"github.com/google/stenographer/stats"
+	// "github.com/google/stenographer/base"
+	//"github.com/google/stenographer/indexfile"
+
+	// "github.com/google/stenographer/stats"
 	"golang.org/x/net/context"
 )
 
@@ -107,6 +111,7 @@ type protocolQuery byte
 
 func (q protocolQuery) LookupIn(ctx context.Context, index *indexfile.IndexFile) (bp base.Positions, err error) {
 	defer log(q, index, &bp, &err)()
+	v(2, "protocolQuery========= %q", q.String())
 	return index.ProtoPositions(ctx, byte(q))
 }
 func (q protocolQuery) String() string { return fmt.Sprintf("ip proto %d", q) }
@@ -116,6 +121,8 @@ type ipQuery [2]net.IP
 
 func (q ipQuery) LookupIn(ctx context.Context, index *indexfile.IndexFile) (bp base.Positions, err error) {
 	defer log(q, index, &bp, &err)()
+	v(2, "ipQuery q[0] ========= %q", q[0].String())
+	v(2, "ipQuery q[0] ========= %q", q[1].String())
 	return index.IPPositions(ctx, q[0], q[1])
 }
 func (q ipQuery) String() string { return fmt.Sprintf("host %v-%v", q[0], q[1]) }
@@ -177,6 +184,8 @@ type timeQuery [2]time.Time
 
 func (a timeQuery) LookupIn(ctx context.Context, index *indexfile.IndexFile) (bp base.Positions, err error) {
 	defer log(a, index, &bp, &err)()
+	v(2, "timeQuerya[0]========= %q", a[0].String())
+	v(2, "timeQuerya[1]========= %q", a[1].String())
 	last := filepath.Base(index.Name())
 	intval, err := strconv.ParseInt(last, 10, 64)
 	if err != nil {
@@ -205,6 +214,58 @@ func (a timeQuery) String() string {
 }
 func (a timeQuery) base() bool { return true }
 
+// macQuery represents a query for a specific MAC address.
+// type macQuery net.HardwareAddr
+
+// func (q macQuery) LookupIn(ctx context.Context, index *indexfile.IndexFile) (bp base.Positions, err error) {
+// 	defer log(q, index, &bp, &err)()
+// 	return index.MACPositions(ctx, net.HardwareAddr(q))
+// }
+
+// func (q macQuery) String() string { return fmt.Sprintf("mac %s", net.HardwareAddr(q).String()) }
+
+// func (q macQuery) base() bool { return true }
+
+// macQuery represents a query for a specific MAC address.
+type macQuery net.HardwareAddr
+
+func (q macQuery) LookupIn(ctx context.Context, index *indexfile.IndexFile) (bp base.Positions, err error) {
+	defer log(q, index, &bp, &err)()
+	v(2, "macQuery========= %q", q.String())
+	return index.MACPositions(ctx, net.HardwareAddr(q))
+}
+
+func (q macQuery) String() string { return fmt.Sprintf("maccc: %s", net.HardwareAddr(q).String()) }
+
+func (q macQuery) base() bool { return true }
+
+// macRangeQuery represents a query for a range of MAC addresses
+type macRangeQuery struct {
+	from, to macQuery
+}
+
+func (q macRangeQuery) LookupIn(ctx context.Context, index *indexfile.IndexFile) (bp base.Positions, err error) {
+	defer log(q, index, &bp, &err)()
+
+	fromPos, err := q.from.LookupIn(ctx, index)
+	if err != nil {
+		return nil, err
+	}
+
+	toPos, err := q.to.LookupIn(ctx, index)
+	if err != nil {
+		return nil, err
+	}
+
+	return fromPos.Union(toPos), nil
+}
+
+func (q macRangeQuery) String() string {
+	return fmt.Sprintf("mac %s mask %s", net.HardwareAddr(q.from).String(), net.HardwareAddr(q.to).String())
+}
+
+func (q macRangeQuery) base() bool { return true }
+
 // NewQuery parses the given query arg and returns a query object.
 // This query can then be passed into a blockfile to get out the set of packets
 // which match it.
@@ -212,5 +273,6 @@ func (a timeQuery) base() bool { return true }
 // Currently, we support one simple method of parsing a query, detailed in the
 // README.md file.  Returns an error if the query string is invalid.
 func NewQuery(query string) (Query, error) {
+	v(2, "query dataaa %q", query)
 	return parse(query)
 }
