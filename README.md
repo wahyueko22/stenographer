@@ -1,6 +1,8 @@
 Stenographer
 ============
 
+Notes : addtional feature to query data with MAC address
+
 Overview
 --------
 
@@ -57,12 +59,14 @@ primitives:
     icmp                  # equivalent to 'ip proto 1'
     tcp                   # equivalent to 'ip proto 6'
     udp                   # equivalent to 'ip proto 17'
+    mac                   # mac addres example 00:1A:2B:3C:4D:5E
 
     # Stenographer-specific time additions:
     before 2012-11-03T11:05:00Z      # Packets before a specific time (UTC)
     after 2012-11-03T11:05:00-07:00  # Packets after a specific time (with TZ)
     before 45m ago        # Packets before a relative time
     after 3h ago         # Packets after a relative time
+    mac 00:1A:2B:3C:4D:5E # Packets with mac address 00:1A:2B:3C:4D:5E 
 
 **NOTE**: Relative times must be measured in integer values of hours or minutes
 as demonstrated above.
@@ -93,7 +97,10 @@ passed to *tcpdump*.  For example:
     # out to a local PCAP file so they can be opened in Wireshark.
     $ stenoread 'net 1.1.1.0/24' -w /tmp/output_for_wireshark.pcap
     
-
+    # Request packets with mac address = 00:1A:2B:3C:4D:5E , writing them
+    # out to a local PCAP file so they can be opened in Wireshark.
+    $ stenoread 'mac 00:1A:2B:3C:4D:5E' -w /tmp/mac_address.pcap
+    
 Downloading
 -----------
 
